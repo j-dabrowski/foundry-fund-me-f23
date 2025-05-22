@@ -1,100 +1,193 @@
-## Foundry
+# Foundry Fund Me – F23
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+**A decentralized crowdfunding smart contract built using the Foundry toolkit and Chainlink oracles.**
 
-Foundry consists of:
+This project was developed as part of the Cyfrin Foundry Course and covers the full lifecycle of smart contract development: writing, testing, deployment, gas analysis, and interaction through the CLI.
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+---
 
-## Documentation
+## Foundry Toolkit
 
-https://book.getfoundry.sh/
+Foundry is a blazing fast, portable, and modular toolkit for Ethereum application development written in Rust.
 
-## Usage
+It includes:
 
-### Build
+- **Forge**: Ethereum testing framework
+- **Cast**: CLI for interacting with contracts and the blockchain
+- **Anvil**: Local testnet node
+- **Chisel**: Solidity REPL
 
-In root fir of the project folder:
+Documentation: https://book.getfoundry.sh/
+
+---
+
+## 🧰 Features
+
+- Chainlink-integrated minimum funding
+- Custom deployment and interaction scripts
+- Local, forked, and testnet testing
+- Gas snapshotting and analysis
+- Cast-based CLI contract interaction
+- Storage inspection and layout viewing
+
+---
+
+## 🔧 Setup
+
+```bash
 forge init
 forge install smartcontractkit/chainlink-brownie-contracts@1.3.0 --no-commit
+```
 
-Add remappings to foundry.toml (so .sol files can reference the chainlnk-brownie-contracts)
-Insert:
+### Add remappings to `foundry.toml`:
+
+```toml
 remappings = [
-"@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/",
+    "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/"
 ]
+```
 
-Build the project
+Then:
+
+```bash
 forge build
-
-```shell
-$ forge build
 ```
 
-### Test
+---
 
-```shell
-$ forge test
-```
+## 🧪 Testing
 
+```bash
+forge test
 forge test -vv
-number of v's specifies verbosity of logging.
-i.e. if console has been imported to the test file, and console logs used, -vv should show their output in the terminal output.
+```
 
-What can we do to work with addresses outside our system? (E.g. price feed contracts)
-Types of tests:
+### Types of Tests
 
-1. Unit
+1. **Unit**: Single function/module
+2. **Integration**: Internal components
+3. **Forked**: Real-world simulation with `--fork-url`
+4. **Staging**: Live testnet behavior without production impact
 
-- Testing a specific part of our code
+### Example – Chainlink Price Feed Test (Forked)
 
-2. Integration
+```bash
+source .env
+forge test --match-test testPriceFeedVersionIsAccurate -vvv --fork-url $SEPOLIA_RPC_URL
+```
 
-- Testing how our code works with other parts of our code
+Ensure `.env` is in `.gitignore`.
 
-3. Forked
+---
 
-- Testing our code on a simulated real environment
+## 🏗 Deployment
 
-4. Staging
+### Local (Anvil)
 
-### Format
+**Terminal 1**
 
-```shell
-$ forge fmt
+```bash
+anvil
+```
+
+**Terminal 2**
+
+```bash
+forge script script/DeployFundMe.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --account defaultKey --sender <deployer_address> --password-file .password
+```
+
+### Arbitrum Sepolia (Testnet)
+
+Set your environment variables in `.env`:
+
+```env
+SEPOLIA_RPC_URL=https://arb-sepolia.g.alchemy.com/v2/your-api-key
+```
+
+Then:
+
+```bash
+source .env
+forge script script/DeployFundMe.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --account metaKey --sender <your_public_address> --password-file .password
+```
+
+Example deployed contract:  
+https://sepolia.arbiscan.io/tx/0x40d9adfced95a9fdc018641d2ad595c12da82a6d71115b6c17c7b8627cc3f3ce
+
+---
+
+## 🧮 Interacting via Cast
+
+### Send a Transaction
+
+```bash
+cast send <contract_address> "store(uint256)" 123 --rpc-url http://127.0.0.1:8545 --account defaultKey --password-file .password
+```
+
+### Call a Function
+
+```bash
+cast call <contract_address> "retrieve()"
+cast --to-base <hex_output> dec
+```
+
+---
+
+## 🛠 Utilities
+
+### Format Code
+
+```bash
+forge fmt
 ```
 
 ### Gas Snapshots
 
-```shell
-$ forge snapshot
+```solidity
+uint256 gasStart = gasleft();
+vm.txGasPrice(1 gwei);
+fundMe.withdraw();
+uint256 gasUsed = (gasStart - gasleft()) * tx.gasprice;
+console.log(gasUsed);
 ```
 
-### Anvil
-
-```shell
-$ anvil
+```bash
+forge snapshot --match-test testWithdrawWithASingleFunder -vv
 ```
 
-### Deploy
+---
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+## 🧬 Storage Inspection
+
+### View Storage Layout
+
+```bash
+forge inspect FundMe storageLayout
 ```
 
-### Cast
+### Inspect Deployed Contract Storage
 
-```shell
-$ cast <subcommand>
+```bash
+cast storage <contract_address> <slot_index>
+cast --to-base <hex_output> dec
 ```
 
-### Help
+---
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+## 🔐 Wallet Setup with Cast
+
+```bash
+cast wallet import <wallet_name> --interactive
+cast wallet list
 ```
+
+Use `--account <wallet_name>` and `--password-file .password` to safely hide private keys.
+
+⚠️ **Security Tip**:  
+Run `history -c` to clear terminal history after importing or using private keys.
+
+---
+
+## License
+
+MIT License. Use and adapt freely.
